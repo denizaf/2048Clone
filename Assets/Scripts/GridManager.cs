@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 
@@ -10,15 +12,24 @@ public class GridManager : MonoBehaviour
     public GameObject tilePrefab;
     public Transform gridParent;
     public int gridSize = 4;
-
+    public Text scoreText;
+    
     private Tile[,] _grid;
-
+    private int _score = 0;
+    
     private void Start()
     {
         _grid = new Tile[gridSize, gridSize];
         InitializeGrid();
         SpawnTile();
         SpawnTile();
+        UpdateScore(0);
+    }
+
+    private void UpdateScore(int points)
+    {
+        _score += points;
+        scoreText.text = "Score: " + _score;
     }
 
     private void InitializeGrid()
@@ -52,6 +63,7 @@ public class GridManager : MonoBehaviour
             Tile randomTile = emptyTiles[Random.Range(0, emptyTiles.Count)];
             randomTile.SetValue(Random.value < 0.9f ? 2 : 4); // 90% chance to spawn 2, 10% chance to spawn 4
         }
+        
     }
 
     public void MoveTiles(Vector2 direction)
@@ -132,8 +144,10 @@ public class GridManager : MonoBehaviour
             else if (nextTile.GetValue() == currentTile.GetValue())
             {
                 //merge
-                nextTile.SetValue(nextTile.GetValue() * 2);
+                int newValue = nextTile.GetValue() * 2; 
+                nextTile.SetValue(newValue);
                 currentTile.SetValue(0);
+                UpdateScore(newValue);
                 return true;
             }
         }
