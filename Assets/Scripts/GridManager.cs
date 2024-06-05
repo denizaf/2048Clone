@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
+using System.Xml;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
@@ -69,6 +70,8 @@ public class GridManager : MonoBehaviour
     public void MoveTiles(Vector2 direction)
     {
         bool hasMoved = false;
+        
+        
 
         if (direction == Vector2.up)
         {
@@ -114,6 +117,15 @@ public class GridManager : MonoBehaviour
         if (hasMoved)
         {
             SpawnTile();
+            ResetMergeState();
+        }
+    }
+
+    private void ResetMergeState()
+    {
+        foreach (Tile tile in _grid)
+        {
+            tile.SetMerged(false);
         }
     }
 
@@ -121,38 +133,52 @@ public class GridManager : MonoBehaviour
     {
         Tile currentTile = _grid[x, y];
 
-        //if tile is empty do nothing
         if (currentTile.IsEmpty())
         {
             return false;
         }
 
-        int newX = x + (int)direction.x;
-        int newY = y + (int)direction.y;
+        bool hasMoved = false;
+        
+        int newX = x;
+        int newY = y;
 
-        if (IsWithinGrid(newX, newY))
+        while (true)
         {
+            newX += (int)direction.x;
+            newY += (int)direction.y;
+            
+            if (!IsWithinGrid(newX, newY))
+            {
+                break;
+            }
+            
             Tile nextTile = _grid[newX, newY];
 
             if (nextTile.IsEmpty())
             {
-                //just slide
                 nextTile.SetValue(currentTile.GetValue());
                 currentTile.SetValue(0);
-                return true;
+                currentTile = nextTile;
+                hasMoved = true;
             }
-            else if (nextTile.GetValue() == currentTile.GetValue())
+            else if (nextTile.GetValue() == currentTile.GetValue() && !nextTile.HasMerged() && !currentTile.HasMerged())
             {
-                //merge
-                int newValue = nextTile.GetValue() * 2; 
+                int newValue = nextTile.GetValue() * 2;
                 nextTile.SetValue(newValue);
                 currentTile.SetValue(0);
                 UpdateScore(newValue);
-                return true;
+                nextTile.SetMerged(true);
+                hasMoved = true;
+                break;
+            }
+            else
+            {
+                break;
             }
         }
-
-        return false;
+        
+        return hasMoved;
     }
 
     private bool IsWithinGrid(int x, int y)
