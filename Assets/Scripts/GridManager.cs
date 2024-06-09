@@ -19,6 +19,7 @@ public class GridManager : MonoBehaviour
     public Text scoreText;
     
     private Tile[,] _grid;
+    private bool _onAction;
     private int _score = 0;
     private float _tileSpacing = 5f; // Adjust based on your tile size and spacing
     
@@ -91,6 +92,11 @@ public class GridManager : MonoBehaviour
 
        
     }
+
+    public bool IsInAction()
+    {
+        return _onAction;
+    }
     
     public Vector3 GetWorldPosition(int x, int y)
     {
@@ -106,13 +112,11 @@ public class GridManager : MonoBehaviour
     {
         bool hasMoved = false;
         
-        
-
         if (direction == Vector2.down)
         {
             for (int x = 0; x < gridSize; x++)
             {
-                for (int y = 1; y < gridSize; y++)
+                for (int y = 0; y < gridSize; y++)
                 {
                     hasMoved |= MoveTile(x, y, direction);
                 }
@@ -122,7 +126,7 @@ public class GridManager : MonoBehaviour
         {
             for (int x = 0; x < gridSize; x++)
             {
-                for (int y = gridSize - 2; y >= 0; y--)
+                for (int y = gridSize - 1; y >= 0; y--)
                 {
                     hasMoved |= MoveTile(x, y, direction);
                 }
@@ -132,7 +136,7 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < gridSize; y++)
             {
-                for (int x = gridSize - 2; x >= 0; x--)
+                for (int x = gridSize - 1; x >= 0; x--)
                 {
                     hasMoved |= MoveTile(x, y, direction);
                 }
@@ -142,7 +146,7 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < gridSize; y++)
             {
-                for (int x = 1; x < gridSize; x++)
+                for (int x = 0; x < gridSize; x++)
                 {
                     hasMoved |= MoveTile(x, y, direction);
                 }
@@ -153,6 +157,10 @@ public class GridManager : MonoBehaviour
         {
             SpawnTile();
             ResetMergeState();
+            if (CheckGameOver())
+            {
+                Debug.Log("Game Over!");
+            }
         }
     }
 
@@ -163,6 +171,8 @@ public class GridManager : MonoBehaviour
             if(tile != null)
                 tile.SetMerged(false);
         }
+
+        _onAction = false;
     }
 
     private bool MoveTile(int x, int y, Vector2 direction)
@@ -175,7 +185,6 @@ public class GridManager : MonoBehaviour
         }
 
         bool hasMoved = false;
-        
         int newX = x;
         int newY = y;
 
@@ -183,12 +192,12 @@ public class GridManager : MonoBehaviour
         {
             newX += (int)direction.x;
             newY += (int)direction.y;
-            
+
             if (!IsWithinGrid(newX, newY))
             {
                 break;
             }
-            
+
             Tile nextTile = _grid[newX, newY];
 
             if (nextTile == null)
@@ -221,12 +230,34 @@ public class GridManager : MonoBehaviour
                 break;
             }
         }
-        
+
         return hasMoved;
     }
-
     private bool IsWithinGrid(int x, int y)
     {
         return x >= 0 && x < gridSize && y >= 0 && y < gridSize;
+    }
+    
+    private bool CheckGameOver()
+    {
+        for (int x = 0; x < gridSize; x++)
+        {
+            for (int y = 0; y < gridSize; y++)
+            {
+                if (_grid[x, y] == null) return false;
+
+                Vector2[] directions = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+                foreach (Vector2 direction in directions)
+                {
+                    int newX = x + (int)direction.x;
+                    int newY = y + (int)direction.y;
+                    if (IsWithinGrid(newX, newY) && (_grid[newX, newY] == null || _grid[newX, newY].GetValue() == _grid[x, y].GetValue()))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 }
