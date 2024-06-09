@@ -10,17 +10,24 @@ public class Tile : MonoBehaviour
     private int _value;
     private bool _isMerged;
 
-    public void Initialize(int x, int y)
+    public void Initialize(int x, int y, int value)
     {
         _x = x;
         _y = y;
-        SetValue(0);
+        SetValue(value);
         SetMerged(false);
     }
 
     public void SetMerged(bool merged)
     {
         _isMerged = merged;
+    }
+    
+    public void SetGridPosition(int x, int y)
+    {
+        _x = x;
+        _y = y;
+        UpdatePosition();
     }
 
     public bool HasMerged()
@@ -42,5 +49,11 @@ public class Tile : MonoBehaviour
     public int GetValue()
     {
         return _value;
+    }
+    
+    private void UpdatePosition()
+    {
+        RectTransform rectTransform = GetComponent<RectTransform>();
+        rectTransform.anchoredPosition = GridManager.Instance.GetWorldPosition(_x, _y);
     }
 }
