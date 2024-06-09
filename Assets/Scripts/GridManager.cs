@@ -12,8 +12,7 @@ using DG.Tweening;
 public class GridManager : MonoBehaviour
 {
     public static GridManager Instance { get; private set; } // Singleton instance
-
-    public GameObject tilePrefab;
+    
     public Transform gridParent;
     public int gridSize = 4;
     public Text scoreText;
@@ -81,7 +80,8 @@ public class GridManager : MonoBehaviour
         if (emptyPositions.Count > 0)
         {
             Vector2Int randomPos = emptyPositions[Random.Range(0, emptyPositions.Count)];
-            GameObject tileObject = Instantiate(tilePrefab, gridParent);
+            GameObject tileObject = ObjectPool.Instance.GetTile();
+            tileObject.transform.SetParent(gridParent);
             Tile newTile = tileObject.GetComponent<Tile>();
             newTile.Initialize(randomPos.x, randomPos.y, Random.value < 0.9f ? 2 : 4);
             _grid[randomPos.x, randomPos.y] = newTile;
@@ -89,8 +89,6 @@ public class GridManager : MonoBehaviour
             newTile.transform.localScale = Vector3.zero;
             newTile.transform.DOScale(Vector3.one, 0.3f);
         }
-
-       
     }
 
     public bool IsInAction()
@@ -110,8 +108,8 @@ public class GridManager : MonoBehaviour
 
     public void MoveTiles(Vector2 direction)
     {
+        if (_onAction) return;
         bool hasMoved = false;
-        
         if (direction == Vector2.down)
         {
             for (int x = 0; x < gridSize; x++)
@@ -214,7 +212,7 @@ public class GridManager : MonoBehaviour
             {
                 int newValue = nextTile.GetValue() * 2;
                 nextTile.SetValue(newValue);
-                Destroy(currentTile.gameObject);
+                ObjectPool.Instance.ReturnTile(currentTile.gameObject);
                 _grid[x, y] = null;
                 currentTile.transform.DOLocalMove(nextTile.transform.localPosition, 0.2f).OnComplete(() =>
                 {
